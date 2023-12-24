@@ -1,0 +1,31 @@
+// @ts-nocheck
+"use strict";
+
+// needs async support?
+import { _LOG_ } from "../Library/Symbols";
+import MessageCoderAsync from "./MessageCoderAsync";
+
+// for protocol
+export default class MessageCoderNetwork extends MessageCoderAsync {
+
+    //
+    constructor($sup) {
+        super($sup);
+    }
+
+    //
+    async decodeMessage([$message = null], $shared = []) {
+        const _unwrap_ = await (this.$decode || ( async (e) => { 
+            return (await this.$msgpck)?.decode(e, {useBigInt64: true}); }))?.(new Uint8Array(await $message));
+        _unwrap_.$args = await Promise.all(_unwrap_.$args?.map?.((m) => this.decodeMember(m, $shared)) ?? []);
+        return [[_unwrap_], []];
+    }
+
+    //
+    async encodeMessage([$data], $shared = []) {
+        $data.$args = (await Promise.all($data.$args?.map?.((e) => this.encodeMember(e, $shared)) ?? []));
+        const _wrap_ = await (this.$encode || ( async (e) => { 
+            return (await this.$msgpck)?.encode(e, {useBigInt64: true}); }))?.($data);
+        return [[_wrap_], []];
+    }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "@bz0/mcoder",
+  "version": "1.0.0",
+  "description": "Mini-codec collection...",
+  "main": "index.mjs",
+  "directories": {
+    "lib": "lib",
+    "test": "test",
+    "jng": "jng"
+  },
+  "type": "module",
+  "scripts": {
+    "serve": "fastify start test/serve.mjs --port 4000 --debug"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BlazerNEO/MCoder.git"
+  },
+  "keywords": [
+    "image",
+    "jng",
+    "jxl",
+    "jpeg",
+    "codec",
+    "coder",
+    "format",
+    "mini",
+    "micro",
+    "tiny",
+    "atomic"
+  ],
+  "author": "user=404",
+  "license": "MIT",
+  "dependencies": {
+    "indexeddb-fs": "^2.1.5"
+  },
+  "devDependencies": {
+    "@fastify/autoload": "^5.7.1",
+    "@fastify/cors": "^8.4.0",
+    "@fastify/static": "^6.11.2",
+    "@rollup/plugin-terser": "^0.4.3",
+    "fastify": "^4.23.2",
+    "fastify-disablecache": "^3.1.6",
+    "harmony-reflect": "^1.6.2",
+    "javascript-obfuscator": "^4.1.0"
+  }
+}

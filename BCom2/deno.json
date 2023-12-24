@@ -1,0 +1,19 @@
+{
+    "imports": {
+        "cbor-x/": "./node_modules/cbor-x/",
+        "cbor-x": "./node_modules/cbor-x/index.js",
+        "@petamoriken/": "./node_modules/@petamoriken/",
+        "@petamoriken/float16": "./node_modules/@petamoriken/float16/browser/float16.mjs",
+        "src/": "./src/",
+        "test/": "./test/",
+        "deps/": "./deps/"
+    },
+    "lint": {
+        "include": ["src/js/"],
+        "rules": {
+            "tags": ["recommended"],
+            "include": ["no-extra-boolean-cast", "no-extra-non-null-assertion", ""],
+            "exclude": ["no-fallthrough"]
+        }
+    }
+}

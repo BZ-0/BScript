@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>AZS library</title>
+        <style>
+            
+        </style>
+        <script type="module">
+            import AZS from "../src/js/azs/index.mjs"
+
+            //
+            AZS.sheet("img[data-test]", [
+                ["src", "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="],
+                ["alt", "test of img"]
+            ]);
+
+            //
+            AZS.event("img[data-test]", ["pointerenter", (evt)=>{
+                console.log("Hover?");
+            }]);
+        </script>
+    </head>
+    <body>
+        <img data-test="true"/>
+    </body>
+</html>

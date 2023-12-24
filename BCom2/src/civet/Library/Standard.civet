@@ -1,0 +1,139 @@
+// @ts-nocheck
+"use strict";
+
+//
+import { wrapFunc, defaultReflection } from "../Reflection/DirectReflection";
+import { GetterReflection} from "../Reflection/DirectReflection";
+import { LazyReflection } from "../Reflection/PromiseReflection";
+import { uuidv4 } from "./Symbols"
+
+/**
+ * @export
+ * @class STD
+ */
+export default class STD {
+    static typify($typeof, $data, $code = {}) {
+        return new Proxy(wrapFunc({
+            ["&data"]: $data?.["&data"] ?? $data,
+            ["&code"]: {
+                ...$code,
+                ["&isCode"]: true, 
+                ["&typeof"]: $typeof
+            }
+        }), defaultReflection);
+    }
+
+    /**
+     * Make object are potentially transferrable
+     * @param {Object} $data transferrable object
+     * @return {Proxy<Object>} access code with proxy into class
+     */
+    static transfer($data, $meta) {
+        return STD.typify("transfer", $data?.["&data"] ?? $data, {
+            "&meta": $meta ?? {"&cid": (crypto?.randomUUID?.() ?? uuidv4())}
+        });
+    };
+
+    /**
+     * Make object are potentially shared (currently, alias of transfer)
+     * @param {Object} $data shared object
+     * @return {Proxy<Object>} access code with proxy into class
+     */
+    static shared($data) { 
+        return STD.typify("shared", $data);
+    };
+
+    /**
+     * Alias for TypeScript, due `class` is reserved keyword
+     * @alias classed
+     * @deprecated
+     */
+    static class($data) { return STD.classed($data); };
+
+    /**
+     * Make object are class with proxied access
+     * @param {Object} $data shared object
+     * @return {Proxy<Object>} access code with proxy into class
+     */
+    static classed($data) {
+        $data = $data["&data"] ?? $data;
+        if (["function", "object"].indexOf(typeof $data) < 0) { 
+            return $data; 
+        };
+        return STD.typify("class", $data);
+    };
+
+    /**
+     * Make object are class with proxied access
+     * @param {Object} $data shared object
+     * @return {Proxy<Object>} access code with proxy into class
+     */
+    static proxy($data, $persistent = false) {
+        $data = $data["&data"] ?? $data;
+        if (["function", "object"].indexOf(typeof $data) < 0) { 
+            return $data; 
+        };
+        return STD.typify("proxy", $data, {
+            "&persistent": $persistent ?? false,
+        });
+    };
+
+    /**
+     * Make serializable object
+     * @param {Object} $data shared object
+     * @return {Proxy<Object>} access code with proxy into class
+     */
+    static object($data) {
+        $data = $data["&data"] ?? $data;
+        if (["function"].indexOf(typeof $data) >= 0) { 
+            throw Error("Function can't to be an object...");
+        };
+        return STD.typify("object", $data);
+    };
+
+    /**
+     * 
+     * @param {*} $call 
+     * @returns 
+     */
+    static getter($call) {
+        return new Proxy(wrapFunc({
+            ["&data"]: $call["&data"] ?? $call,
+            ["&code"]: {
+                ["&isCode"]: true, 
+                ["&typeof"]: "getter"
+            }
+        }), new GetterReflection());
+    }
+
+    /**
+     * 
+     * @param {*} $call 
+     * @returns 
+     */
+    static lazy($call) {
+        return new Proxy(wrapFunc({
+            ["&data"]: $call["&data"] ?? $call,
+            ["&code"]: {
+                ["&isCode"]: true, 
+                ["&typeof"]: "lazy"
+            }
+        }), new LazyReflection());
+    }
+
+    /**
+     * 
+     * @param {*} $call 
+     * @returns 
+     */
+    static fetch = (typeof self != "undefined" ? self : global).fetch;
+    static createImageBitmap = (typeof self != "undefined" ? self : global).createImageBitmap;
+    static OffscreenCanvas = (typeof self != "undefined" ? self : global).OffscreenCanvas;
+
+    // better use that feature...
+    static ShadowRealm = (typeof self != "undefined" ? self : global).ShadowRealm;
+
+    //
+    //static WrapSocket = null;
+    //static WrapWorker = null;
+}

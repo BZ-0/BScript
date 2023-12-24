@@ -1,0 +1,41 @@
+// @ts-nocheck
+"use strict";
+
+// for waiting commands
+export default class ResponseReceiver {
+    /** @type {Function} */
+    #resolve = null;
+
+    /** @type {Function} */
+    #reject = null;
+
+    /** */
+    #buffer = null;
+
+    //
+    constructor(_, buffer) {
+        this.#buffer = buffer;
+        this["&data"] = new Promise((resolve, reject) => {
+            this.#resolve = resolve;
+            this.#reject = reject;
+        });
+    }
+
+    //
+    get $buffer() {
+        return this.#buffer;
+    }
+
+    //
+    async resolve(...args) {
+        const _decoded_ = await Promise.all(await args);
+        return this.#resolve(..._decoded_);
+    }
+
+    //
+    async reject(...args) {
+        const _decoded_ = await Promise.all(await args);
+        console.error(..._decoded_);
+        return this.#reject(..._decoded_);
+    }
+};

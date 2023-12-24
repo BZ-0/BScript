@@ -1,0 +1,14 @@
+{
+    "tabWidth": 4,
+    "useTabs": false,
+    "bracketSameLine": true,
+    "printWidth": 1000000,
+    "semi": false,
+    "quoteProps": "consistent",
+    "trailingComma": "none",
+    "bracketSpacing": true,
+    "arrowParens": "always",
+    "parser": "babel",
+    "endOfLine": "lf",
+    "embeddedLanguageFormatting": "auto"
+}

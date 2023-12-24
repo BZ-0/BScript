@@ -1,0 +1,104 @@
+// @ts-nocheck
+"use strict";
+
+//
+export * from "./Library/Symbols";
+
+//
+import AutoDetector from "./Reflection/AutoDetector";
+import MessageCoder from "./MessageCoder/MessageCoderWorker";
+import ReferenceDictionary from "./Protocol/ReferenceDictionary";
+import MessageHandler from "./Protocol/MessageHandler";
+
+//
+import ResponseReceiver from "./Response/Receiver";
+import ResponseTransmitter from "./Response/Transmitter";
+
+//
+import { DirectReflection, IndirectReflection } from "./Reflection/DirectReflection";
+
+//
+import WorkerHandler, { WrapWorker } from "./Handlers/WorkerHandler";
+import SocketHandler, { WrapSocket } from "./Handlers/SocketHandler";
+import STD from "./Library/Standard";
+
+// auto-register from worker
+export const InitializeInstance = (options) => {
+    if (options.self) { // node-JS custom
+        IW.Instance ??= WrapWorker(options.self, options);
+    } else if (typeof self != "undefined" && (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope || !!self.Bun || !!self.Deno)) {
+        IW.Instance ??= WrapWorker(self, options);
+    }
+    return IW.Instance;
+}
+
+/**
+ * 
+ * @param {string} aURL a string representing the URL of the module script the worker will execute.
+ * @returns {string} The string representing the URL of the script the worker will execute.
+ */
+
+// FOR DEVELOPMENT ONLY
+const IWLib = "src/js/index.mjs";
+const WrapWorkerURL = (aURL, importMap = null, options = "{}") => {
+    // baseURL, esModuleShimsURL are considered to be known in advance
+    // esModuleShimsURL - must point to the non-CSP build of ES Module Shims, 
+    // namely the `es-module-shim.wasm.js` output: es-module-shims/dist/es-module-shims.wasm.js
+    if (!importMap || typeof Deno != "undefined") {
+        return URL.createObjectURL(new Blob([
+            `import IW from "${IWLib}"
+            import * as _module_ from '${aURL}';
+            Object.assign(IW.InitializeInstance(${options}), _module_);`
+        ], { type: 'application/javascript' }))
+    } else {
+        const esModuleShimsURL = "https://ga.jspm.io/npm:es-module-shims@1.8.0/dist/es-module-shims.js"
+        return URL.createObjectURL(new Blob([
+            `//importScripts('${esModuleShimsURL}'); // classic
+            import * as _shim_ from '${esModuleShimsURL}'; // module
+            importShim.addImportMap(${JSON.stringify(importMap)});
+            const _module_ = importShim('${aURL}');
+            await importShim("${IWLib}").then(async (IW) => {
+                Object.assign(IW.InitializeInstance(${options}), await _module_);
+            })`
+        ], { type: 'application/javascript' }))
+    }
+}
+
+//
+export default class IW {
+    /**
+     * Worker wrapper class instance
+     */
+    static WHandle = WorkerHandler;
+    static WrapWorker = WrapWorker;
+
+    static SHandle = SocketHandler;
+    static WrapSocket = WrapSocket;
+    static WrapWorkerURL = WrapWorkerURL;
+
+    //static Instance = null;
+
+    /**
+     * For modding purpose...
+     */
+    static Component = {
+        WorkerHandler, 
+        ReferenceDictionary, 
+        DirectReflection, 
+        IndirectReflection,
+        AutoDetector, 
+        MessageHandler,
+        MessageCoder,
+        ResponseReceiver,
+        ResponseTransmitter
+    };
+
+    //
+    static proxy = STD.proxy;
+    static classed = STD.classed;
+    static shared = STD.shared;
+    static transfer = STD.transfer;
+
+    //
+    static InitializeInstance = InitializeInstance;
+};

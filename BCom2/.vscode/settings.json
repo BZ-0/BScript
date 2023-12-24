@@ -1,0 +1,19 @@
+{
+    "docwriter.style": "Auto-detect",
+    "fiveServer.settings.ChromeDebuggingAttachment": true,
+    "fiveServer.settings.NoBrowser": true,
+    "fiveServer.settings.port": 4000,
+    "fiveServer.settings.root": "/",
+    "fiveServer.settings.AdvanceCustomBrowserCmdLine": "C:\\Users\\User\\AppData\\Local\\Thorium\\Application\\thorium.exe --no-startup-window --incognito --headless --remote-debugging-port=9222",
+    "fiveServer.settings.useLocalIp": true,
+    "fiveServer.settings.useWebExt": true,
+    "fiveServer.settings.mount": [
+        ["jsox", "/node_modules/jsox"],
+        ["@msgpack", "/node_modules/@msgpack"],
+        ["src", "/src"],
+        ["BTyped2", "/deps/BTyped2"]
+    ],
+    "fiveServer.port": 4000,
+    "fiveServer.injectBody": true,
+    "fiveServer.highlight": false
+}

@@ -1,0 +1,333 @@
+:host, :host * {
+    /* */
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: auto;
+    font-smooth: always;
+    text-rendering: optimizeLegibility;
+    text-rendering: geometricPrecision;
+
+    /* */
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000;
+
+    /* */
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+
+    /* Enable hardware acceleration */
+    -webkit-transform: translate3d(0, 0, 0);
+    -moz-transform: translate3d(0, 0, 0);
+    -ms-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+
+    /* */
+    transform-origin: 50% 50%;
+
+    /* Some filter hack */
+    filter: grayscale(0%);
+    overflow: hidden;
+    scrollbar-width: none;
+    box-sizing: border-box;
+
+    /* Disable transition by default */
+    -webkit-transition: none;
+    -moz-transition: none;
+    -o-transition: none;
+    transition: none;
+}
+
+@supports (scrollbar-width: none) {
+    :host > .scrollable {
+        scrollbar-gutter: stable both-edges;
+        scrollbar-width: none;
+    }
+}
+
+:host {
+    /* don't override! */
+    position: relative !important;
+    top: 0; bottom: 0; left: 0; right: 0;
+    display: inline-block !important;
+    overflow: hidden !important;
+    touch-action: none;
+    scrollbar-width: none !important;
+    white-space: nowrap;
+
+    /* */
+    max-width: min(min(min(100cqw, 9999px), 100dvw), 100%);
+    max-height: min(min(min(100cqh, 9999px), 100dvh), 100%);
+
+    /* */
+    width: min(min(min(100cqw, 9999px), 100dvw), 100%);
+    height: min(min(min(100cqh, 9999px), 100dvh), 100%);
+
+    /* */
+    min-width: min-content;
+    min-height: min-content;
+
+    /* */
+    padding: 0px;
+    margin: 0px;
+
+    /* */
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+
+    /* */
+    --padding-left: 0px;
+    --padding-right: 0px;
+    --padding-top: 0px;
+    --padding-bottom: 0px;
+}
+
+/* work-around for chrome */
+:host > .scrollable::-webkit-scrollbar {
+    -webkit-appearance: none;
+    display: none;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+:host > .scroll-x > .track:active, 
+:host > .scroll-y > .track:active {
+    cursor: move; /* fallback: no url() support or images disabled */
+    cursor: -webkit-grabbing; /* Chrome 1-21, Safari 4+ */
+    cursor:    -moz-grabbing; /* Firefox 1.5-26 */
+    cursor:         grabbing; /* W3C standards syntax, should come least */
+}
+
+/* TODO: scrolling library! */
+/* Descended elements */
+:host > .top-left, 
+:host > .top-right, 
+:host > .bottom-left, 
+:host > .bottom-right {
+    z-index: -1;
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    display: block;
+    width: 0;
+    height: 0;
+    line-height: 0;
+    overflow: hidden;
+    color: transparent;
+    background-color: transparent;
+    content-visibility: hidden;
+    visibility: hidden;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+:host > .top-right {
+    top: calc(0px - var(--padding-top));
+    left: auto;
+    bottom: auto;
+    right: calc(0px - var(--padding-right));
+    float: right;
+}
+
+:host > .top-left {
+    top: calc(0px - var(--padding-top));
+    left: calc(0px - var(--padding-left));
+    bottom: auto;
+    right: auto;
+    float: left;
+}
+
+:host > .bottom-right {
+    top: auto;
+    left: auto;
+    bottom: calc(0px - var(--padding-bottom));
+    right: calc(0px - var(--padding-right));
+    float: right;
+}
+
+:host > .bottom-left {
+    top: auto;
+    left: calc(0px - var(--padding-left));
+    bottom: calc(0px - var(--padding-bottom));
+    right: auto;
+    float: left;
+}
+
+:host > .scrollable > .content {
+    white-space: pre-line;
+    display: block;
+    position: relative !important;
+    min-width: max(min(min(100cqw, 9999px), 100%), var(--min-width));
+    min-height: min(min(100cqh, 9999px), 100%);
+    width: min-content;
+    height: min-content;
+    overflow: visible;
+    box-sizing: border-box;
+    will-change: scroll-position;
+
+    /* */
+    left: auto; right: auto;
+    top: auto; bottom: auto;
+
+    /* */
+    direction: ltr !important;
+    transform: scale(var(--scale));
+    /*scale: var(--scale) !important;
+    transform-origin: 50% 0%;*/
+}
+
+:host > .scrollable {
+    direction: ltr !important;
+
+    /* */
+    white-space: nowrap;
+    will-change: scroll-position;
+    scroll-snap-type: y mandatory;
+
+    /* */
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+
+    /* */
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+
+    /* */
+    z-index: 0;
+    text-align: center;
+    position: relative;
+    left: auto; right: auto;
+    top: auto; bottom: auto;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+
+    /* */
+    display: block;
+
+    /* */
+    width: min(min(min(100cqw, 9999px), 100dvw), 100%);
+    height: min(min(min(100cqh, 9999px), 100dvh), 100%);
+
+    /* */
+    max-width: min(min(min(100cqw, 9999px), 100dvw), 100%);
+    max-height: min(min(min(100cqh, 9999px), 100dvh), 100%);
+    
+    /* */
+    overflow: auto !important;
+    scrollbar-gutter: auto;
+    scroll-behavior: smooth;
+    touch-action: none;
+}
+
+/* */
+:host > .scroll-x, 
+:host > .scroll-y {
+    box-sizing: border-box;
+    overflow: hidden;
+    position: absolute;
+    background-color: transparent;
+    pointer-events: none;
+    z-index: 9999;
+    text-align: left;
+
+    /* */
+    top: 0; bottom: 0;
+    left: 0; right: 0;
+    display: inline-block;
+
+    /* */
+    translate: 0px 0px 0px;
+    transform-origin: 50% 50%;
+}
+
+/* */
+:host > .scroll-x > .track, 
+:host > .scroll-y > .track {
+    /* */
+    box-sizing: border-box;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.5);
+    cursor: grab;
+    pointer-events: auto;
+    position: relative;
+
+    /* */
+    top: 0; bottom: 0;
+    left: 0; right: 0;
+    display: inline-block;
+
+    /* */
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+
+    /* */
+    translate: 0px 0px 0px;
+    transform-origin: 50% 50%;
+}
+
+/* */
+:host > .scroll-y {
+    height: calc(min(min(100cqh, 9999px), 100%) - min(1dvh, 1dvw));
+    width: min(1dvh, 1dvw);
+
+    top: 0px;
+    right: 0px;
+    left: auto;
+    bottom: auto;
+}
+
+/* */
+:host > .scroll-x {
+    width: calc(min(min(100cqw, 9999px), 100%) - min(1dvh, 1dvw));
+    height: min(1dvh, 1dvw);
+
+    top: auto;
+    right: auto;
+    left: 0px;
+    bottom: 0px;
+}
+
+/* */
+:host > .scroll-y > .track {
+    --offsetPercent: 0.0;
+
+    width: min(min(100cqw, 9999px), 100%);
+    height: var(--ownSize);
+    will-change: transform, height, translate;
+    translate: 0px calc(
+        var(--offsetPercent) * 
+        calc(min(100cqh, 9999px) - var(--ownSize))
+    ) 0px;
+}
+
+/* */
+:host > .scroll-x > .track {
+    --offsetPercent: 0.0;
+
+    direction: ltr !important;
+    height: min(min(100cqh, 9999px), 100%);
+    width: var(--ownSize);
+    will-change: transform, width, translate;
+    translate: calc(
+        var(--offsetPercent) * 
+        calc(min(100cqw, 9999px) - var(--ownSize))
+    ) 0px 0px;
+}

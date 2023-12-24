@@ -1,0 +1,159 @@
+// @ts-nocheck
+"use strict";
+
+//
+import { fp16m } from "../Library/Imports";
+import { _LOG_, isPlainObject } from "../Library/Symbols";
+import { wrapFunc, defaultReflection } from "./DirectReflection";
+
+//
+export default class AutoDetector {
+    $rules = null;
+    $instances = [];
+    $transfer = [];
+    $shared = [];
+    $typed = {};
+
+    //
+    constructor(data) {
+        //
+        this.$instances = [
+            //DataView,
+            typeof OffscreenCanvas != "undefined" ? OffscreenCanvas : undefined, 
+            typeof OffscreenCanvasRenderingContext2D != "undefined" ? OffscreenCanvasRenderingContext2D : undefined, Promise].filter((I) => { return typeof I != "undefined"; });
+        if (typeof HTMLCanvasElement != "undefined") { 
+            this.$instances.push(HTMLCanvasElement); 
+        };
+
+        //
+        this.$shared = [Blob].concat([
+            typeof SharedWorker != "undefined" ? SharedWorker : undefined,
+            typeof SharedArrayBuffer != "undefined" ? SharedArrayBuffer : undefined,
+            typeof WebAssembly.Module != "undefined" ? WebAssembly.Module : undefined,
+        ]).filter((I) => { return typeof I != "undefined"; });
+
+        //
+        this.$typed = {
+            "$u8": typeof Uint8Array != "undefined" ? Uint8Array : Array,
+            "$u8c": typeof Uint8ClampedArray != "undefined" ? Uint8ClampedArray : Array,
+            "$i8": typeof Int8Array != "undefined" ? Int8Array : Array,
+            "$u16": typeof Uint16Array != "undefined" ? Uint16Array : Array,
+            "$i16": typeof Int16Array != "undefined" ? Int16Array : Array,
+            "$u32": typeof Uint32Array != "undefined" ? Uint32Array : Array,
+            "$i32": typeof Int32Array != "undefined" ? Int32Array : Array,
+            "$f32": typeof Float32Array != "undefined" ? Float32Array : Array,
+            "$f64": typeof Float64Array != "undefined" ? Float64Array : Array,
+            "$i64": typeof BigInt64Array != "undefined" ? BigInt64Array : Array,
+            "$u64": typeof BigUint64Array != "undefined" ? BigUint64Array : Array,
+            "$dv": typeof DataView != "undefined" ? DataView : Array,
+            //"$mp": typeof MessagePort != "undefined" ? MessagePort : Array
+        };
+
+        // try to load float16 support
+        this.$typed["$f16"] = fp16m?.Float16Array;
+
+        //
+        this.$transfer = [
+            ArrayBuffer, 
+            MessagePort, 
+            ReadableStream, 
+            WritableStream, 
+            TransformStream, 
+            WebAssembly.Memory,
+            
+            /*
+            Uint8Array,
+            Uint8ClampedArray,
+            Int8Array,
+            Uint16Array,
+            Int16Array,
+            Uint32Array,
+            Int32Array,
+            Float16Array,
+            Float32Array,
+            Float64Array,
+            BigInt64Array,
+            BigUint64Array,
+            DataView,
+            */
+
+            //Blob,
+        ].concat([
+            typeof OffscreenCanvas != "undefined" ? OffscreenCanvas : undefined,
+            typeof SharedArrayBuffer != "undefined" ? SharedArrayBuffer : undefined,
+            typeof ImageBitmap != "undefined" ? ImageBitmap : undefined,
+            typeof AudioData != "undefined" ? AudioData : undefined,
+            typeof VideoFrame != "undefined" ? VideoFrame : undefined,
+        ]).filter((I) => { return typeof I != "undefined"; });
+
+        //
+        this["&data"] = data;
+        this.$rules = new Map([
+            ["promise", ($m) => { return ($m instanceof Promise); }],
+            ["typedarray", ($m) => { return $m?.buffer && $m.BYTES_PER_ELEMENT || $m instanceof DataView; }],
+            ["array", ($m) => { return Array.isArray($m) || $m instanceof Array; }],
+            ["shared", ($m) => { return typeof $m == "object" && this.$shared.some((C) => ($m instanceof C)); }], // abscent
+            ["transfer", ($m) => { return typeof $m == "object" && this.$transfer.some((C) => ($m instanceof C)); }], // abscent
+            ["class", ($m) => { return (typeof $m == "object" && (this.$instances.some((C) => ($m instanceof C)) || !isPlainObject($m))) || typeof $m == "function"; }],
+            ["proxy", ($m) => { return $m?.["&typeof"] == "proxy"; }],
+            ["object", ($m) => { return (typeof $m == "object" || isPlainObject($m)); }],
+        ])
+    }
+
+    //
+    $dropShared($m) {
+        return (!this.$shared.some((C) => ($m instanceof C || $m?.buffer instanceof C)) && this.$transfer.some((C) => ($m instanceof C || $m?.buffer instanceof C)));
+    }
+
+    //
+    $typewrap($t, $ab, $bo, $bl, $meta) {
+        if (!$t || $t == "$unk" || !this.$typed[$t]) return $ab;
+        const $I = new this.$typed[$t]($ab, $bo, $bl / (this.$typed[$t]?.BYTES_PER_ELEMENT||1));
+        return $meta ? new Proxy(wrapFunc({
+            ["&data"]: $I,
+            ["&code"]: {
+                ["&meta"]: $meta,
+                ["&typeof"]: "transfer", 
+            }
+        }), defaultReflection) : $I;
+    }
+
+    //
+    $typedarray($ta) {
+        for (const $t in this.$typed) {
+            if ($ta instanceof this.$typed[$t]) { 
+                return $t 
+            };
+        }
+        return "$unk";
+    }
+
+    //
+    get ["&typeof"]() {
+        if (this["&data"]?.["&typeof"]) { 
+            return this["&data"]?.["&typeof"]; 
+        };
+        for (const key of this.$rules.keys()) { 
+            if (this.$rules.get(key)(this["&data"])) { 
+                return key; 
+            }; 
+        };
+        return "primitive";
+    }
+
+    //
+    get ["&code"]() {
+        return {
+            "&persistent": false,
+            "&typeof": this?.["&typeof"],
+            "&data": this?.["&data"],
+            "&isCode": true
+        };
+    }
+};
+
+//
+AutoDetector.isPlainObject = isPlainObject;
+
+//
+export { isPlainObject };

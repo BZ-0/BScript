@@ -1,0 +1,247 @@
+// @ts-nocheck
+"use strict";
+
+//
+import { uuidv4, _LOG_, $symbols } from "../Library/Symbols";
+import { wrapFunc, defaultReflection } from "../Reflection/DirectReflection";
+import { $unwrap } from "../Reflection/PromiseReflection";
+import STD from "../Library/Standard";
+
+//
+export class WeakRefCleaner {
+    /** @type {String} */
+    #name = "";
+
+    /** @type {Map<String, Object|Function>} */
+    #map = null;
+
+    //
+    constructor(map, name) {
+        this.#map = map;
+        this.#name = name;
+    }
+
+    //
+    get($temp, $name, _) {
+        if ($name == "deref" && $temp[$name]) {
+            return () => {
+                const _ref_ = $temp[$name]();
+                if (!_ref_?) { 
+                    //console.log(this.#name + ": died...");
+                    this.#map.delete(this.#name); 
+                };
+                return _ref_;
+            }
+        };
+    }
+
+    // won't back any keys
+    ownKeys() { return []; };
+    has() { return false; };
+}
+
+//
+export const wrapWeakRef = (map, registry, temp, name, hold) =>{
+    registry.register(hold ?? temp, name);
+    return new Proxy(new WeakRef(temp), new WeakRefCleaner(map, name));
+};
+
+//
+export class IdentifiedSet {
+    /** @type {Map<Object|Function, String>} */
+    #wmap = new WeakMap();
+
+    /** @type {Map<String, Object|Function>} */
+    #kmap = new Map();
+
+    /** @type {FinalizationRegistry} */
+    #rmap = new FinalizationRegistry((_) => {});
+
+    //
+    constructor() {
+        this.#wmap = new WeakMap();
+        this.#kmap = new Map();
+        this.#rmap = new FinalizationRegistry(($name) => {
+            //console.log($name + ": died...");
+            this.#kmap.delete($name);
+        });
+    }
+
+    //
+    add(obj, hold = null) {
+        hold ??= obj;
+        if (this.#wmap.has(hold)) {
+            return this.#wmap.get(hold);
+        } else {
+            const uuid = uuidv4();
+            this.#rmap.register(hold, uuid);
+            this.#wmap.set(hold, uuid);
+            this.#kmap.set(uuid, wrapWeakRef(this.#kmap, this.#rmap, obj, uuid, hold));
+            setTimeout((hold) => { hold; }, 1000, hold);
+            return uuid;
+        }
+    }
+
+    //
+    get(uuid) {
+        return this.#kmap.get(uuid)?.deref?.() ?? this.#kmap.get(uuid);
+    }
+
+    //
+    delete(uuid) {
+        this.#wmap.delete(this.get(uuid));
+        this.#kmap.delete(uuid);
+    }
+}
+
+//
+export const map = new IdentifiedSet();
+export default class ReferenceDictionary {
+    /** @type {Map<String, Object|Function>} */
+    #persistent = null;
+
+    /** @type {IndirectReflection} */
+    #indirectReflect = null;
+
+    /** @type {RequestReflection} */
+    #requestReflect = null;
+
+    /** @type {Set<String>} */
+    #module = new Set();
+
+    //
+    set _requestReflect(requestReflect) {
+        this.#requestReflect = requestReflect;
+    }
+
+    //
+    set _indirectReflect(indirectReflect) {
+        this.#indirectReflect = indirectReflect;
+    }
+
+    //
+    set _inbox(coder) {}
+    set _outbox(coder) {}
+
+    //
+    constructor() {
+        this.#persistent = new Map();
+        this.#module = new Set();
+
+        //
+        this.#persistent.set("$keys", STD.getter(() => {
+            return Array.from(this.#module.keys());
+        }));
+
+        //
+        this.$register(STD.proxy(STD, true), "std");
+    }
+
+    //
+    #newUUID() {
+        return (crypto?.randomUUID?.() ?? uuidv4());
+    }
+
+    /**
+     * 
+     * @param {Object|Function} $raw 
+     * @param {String} $origin 
+     * @param {Boolean} $pflag 
+     * @returns {Proxy<IndirectReflection>}
+     */
+    $temp($raw, $code, $hold) {
+        $raw = $unwrap($raw);
+
+        // now, can...
+        /*if ($raw instanceof Promise || $raw?.["&typeof"] == "promise") {
+            throw Error("Promise or lazy can't be to temp");
+        }*/
+
+        //
+        const $proxy = map.add($raw, $hold ?? $raw);
+        return new Proxy(wrapFunc({
+            ["&data"]: $raw,
+            ["&code"]: {
+                ["&root"]: $code?.["&root"] || $code?.["&origin"] || $proxy,
+                ["&typeof"]: $code?.["&typeof"] ?? "proxy", 
+                ["&origin"]: $code?.["&origin"] ?? $proxy, 
+                ["&proxy"]: $proxy,
+                ["&persistent"]: $code?.["&persistent"],
+                ["&isCode"]: true
+            }
+        }), this.#indirectReflect);
+    }
+
+    /**
+     * 
+     * @param {String} $did 
+     * @param {Boolean} $persistent 
+     * @returns {*}
+     */
+    $access($did = "", $persistent = false) {
+        return new Proxy(wrapFunc({
+            ["&data"]: null,
+            ["&code"]: {
+                ["&isCode"]: true,
+                ["&typeof"]: "proxy", 
+                ["&proxy" ]: $did?.["&proxy" ] || $did, 
+                ["&origin"]: $did?.["&origin"] || $did,
+                ["&persistent"]: $persistent
+            }
+        }), this.#requestReflect);
+    }
+
+    /**
+     * 
+     * @param {String} $id 
+     * @param {Boolean} $persistent 
+     * @returns {*}
+     */
+    $get($id, $persistent = false) {
+        if (!$id?) return null;
+        if (["object", "function"].indexOf(typeof $id) >= 0) 
+            return $id;
+
+        //
+        const $obj = $persistent ? (this.#persistent.get($id) ?? map.get($id)) : map.get($id);
+        if (!$obj?) return null;
+        if ($obj?.["&typeof"] == "getter") { 
+            return $obj?.[$symbols["&data"]] ?? $obj?.["&data"];
+        };
+        return $obj;
+    }
+
+    /**
+     * 
+     * @param {*} $data 
+     * @param {String} $proxy 
+     * @returns 
+     */
+    $register($data, $proxy = null) {
+        $data = $unwrap($data);
+        if ($data instanceof Promise || $data?.["&typeof"] == "promise") {
+            throw Error("Promise or lazy can't be to registered");
+        }
+
+        //
+        $proxy ||= this.#newUUID();
+        const $wrap = ($data?.["&isWrap"] || (["function", "object"].indexOf(typeof $data) < 0)) ? $data : (new Proxy(wrapFunc({
+            ["&data"]: $data,
+            ["&code"]: {
+                ["&typeof"]: "proxy", 
+                ["&root"]: ($data?.["&root"] || $data?.["&proxy"] || $data?.["&origin"] || $proxy),
+                ["&origin"]: ($proxy || $data?.["&proxy"] || $data?.["&origin"]), 
+                ["&proxy"]: $proxy, 
+                ["&isCode"]: true,
+                ["&persistent"]: true
+            }
+        }), defaultReflection));
+
+        //
+        this.#persistent.set($proxy, $wrap);
+        if ($proxy != "$keys") { 
+            this.#module.add($proxy); 
+        };
+        return $wrap;
+    }
+};

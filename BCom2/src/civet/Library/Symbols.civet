@@ -1,0 +1,105 @@
+// @ts-nocheck
+"use strict";
+
+//
+const exchange = (obj, key, _new_) =>  { const _old_ = obj[key]; obj[key] = _new_; return _old_; };
+
+//
+Object.exchange ??= exchange;
+
+//
+Array.exchange ??= exchange;
+Array.prototype.exchange ??= function(I, _new_) { return exchange(this, I, _new_); };
+
+//
+Map.prototype.exchange ??= function(name, val) { const $old = this.get(name); this.set(name, val); return $old; }
+Map.prototype.shift ??= function(name, _) { const $old = this.get(name); this.delete(name); return $old; }
+
+//
+WeakMap.prototype.exchange ??= function(name, val) { const $old = this.get(name); this.set(name, val); return $old; }
+WeakMap.prototype.shift ??= function(name, _) { const $old = this.get(name); this.delete(name); return $old; }
+
+
+//
+export const $drop = ($fn) => {
+    return typeof $fn?.["&data"] == "function" || typeof $fn == "function" ? null : $fn;
+}
+
+//
+export const $symbols = {
+    "&persistent": Symbol("&persistent"),
+    "&proxy": Symbol("&proxy"),
+    "&origin": Symbol("&origin"),
+    "&typeof": Symbol("&typeof"),
+    "&isWrap": Symbol("&isWrap"),
+    "&isCode": Symbol("&isCode"),
+    "&source": Symbol("&source"),
+    "&path": Symbol("&path"),
+    "&temp": Symbol("&temp"),
+    "&data": Symbol("&data"),
+    "&code": Symbol("&code"),
+    "&meta": Symbol("&meta")
+};
+
+//
+export const $names = Object.fromEntries(Object.entries($symbols).map(([k,v]) => {
+    return [v,k];
+}));
+
+//
+export const $symbolize = ($original) => {
+    if (typeof $original == "object") {
+        const $obj = {...$original};
+        for (const $k in $obj) {
+            if ($symbols[$k] && $obj[$k]?) {
+                $obj[$symbols[$k]] = $obj[$k];
+                delete $obj[$k];
+            }
+        }
+        return $obj;
+    }
+    return $original;
+}
+
+//
+export const FakeReflect = {
+    get: ($t, $n) => { return $t[$n]; },
+    set: ($t, $n, $a) => { $t[$n] = $a; return true; },
+    ownKeys: ($t) => { return Object.keys($t); },
+    has: ($t, $n) => { return $n in $t; },
+    apply: ($t, $s, $a) => { return $t.apply($s, $a); },
+    construct: ($t, $a) => { return new $t(...$a); }
+};
+
+//
+export const _LOG_ = (...$args) => {
+    console.log(...$args);
+    return $args[0];
+}
+
+//
+export const $contextify = (self, fn) => {
+    return (typeof fn == "function" && typeof fn?.bind == "function" && (!self?.["&isWrap"] && !fn?.["&isWrap"]) && self != fn && self? && fn?) ? (fn?.bind?.(self) ?? fn) : fn;
+}
+
+//
+export const uuidv4 = () => {
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+}
+
+//
+export const isPlainObject = (obj) => ((obj instanceof Object) && (obj?.constructor === Object && Object.getPrototypeOf(obj) === Object.prototype));
+export const ifString = (a, b) => { return typeof a == "string" ? a : b; };
+export const isWorker = typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
+
+//
+export const $tryIn = (o, what)=>{
+    return what.filter((w)=>(o?.[w]?))[0];
+}
+
+//
+export const $instanceAnyOf = (o, what) => {
+    return what.some((W)=>(o instanceof W));
+}
+
+

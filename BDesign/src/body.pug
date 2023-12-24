@@ -1,0 +1,66 @@
+
+nav.sky 
+  .left
+    
+  .right 
+    ul 
+      li 
+        a(href='#main') Main
+      li 
+        a(href='#about') About
+      li 
+        a(href='#contacts') Contacts
+
+div.scrollable.sky
+  
+  div(is='scroll-able' storage='body' pinch-and-zoom='false')
+    section#main.sky.fullscreen.wallpaper(style='--wallpaper: url("./img/645620.png")')
+
+      .card
+          h1 BlazerNEO 
+          br
+          p New generation of JavaScript library sets.
+          br
+          button Download
+
+    section#about.sky.fullscreen.wallpaper(style='--wallpaper: url("./img/vect.jpg")')
+      div(is='media-query' media='(min-width: 1440px)')
+        h1(style='color: black;') Features
+      br
+      .row
+        .card
+          i.bi.bi-boxes(style='font-size: 3rem; ')
+          br
+          h1 Modular
+          br
+          p Новая модульная архитектура нашей разработки
+          br
+        .card 
+          i.bi.bi-binoculars(style='font-size: 3rem; ')
+          br
+          h1 Detailed
+          br
+          p Мы работает с вниманием к деталям
+          br
+        .card 
+          i.bi.bi-cpu(style='font-size: 3rem; ')
+          br
+          h1 Next-Gen
+          br
+          p У нас исключительно новые технологии
+          br
+    section#contacts.sky.fullscreen.wallpaper(style='--wallpaper: url("./img/wallpaper.jpg")')
+      .grid(class='bicoldep') 
+        .card 
+          br
+          h1 
+          br
+          .grid(class='left' style='--columns: 2') 
+            .field Email: 
+            .value unit-a@hydra2s.ru
+            .field Phone: 
+            .value +79243987000
+          br
+          img.avatar(src='./img/avatar.jpg' loading="lazy" decoding="async")
+        div(is='media-query' media='(min-width: 1280px)')
+          img(src='./img/angel.png' alt='Angel' loading="lazy" decoding="async")

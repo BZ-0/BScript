@@ -1,0 +1,202 @@
+// @ts-nocheck
+"use strict";
+
+//
+import PromiseReflection, { $unwrap } from "./PromiseReflection";
+import { $symbols, $names, _LOG_ } from "../Library/Symbols";
+import { wrapFunc, BaseReflection } from "./DirectReflection";
+
+// from remote side...
+export default class RequestReflection extends BaseReflection {
+    /** @type {WorkerHandler|SocketHandler|BaseHandler} */
+    $worker = null;
+
+    /** @type {Boolean} */
+    $async = false;
+
+    /** */
+    $queue = [];
+
+    //
+    constructor(worker, $async = false) {
+        super(Reflect);
+        this.$worker = worker;
+        this.$async = $async;
+    }
+
+    //
+    $func($p) { return ($p instanceof Promise) ? wrapFunc({["&data"]: $p, ["&code"]: {["&typeof"]: "promise"}}) : $p; }
+    $data($hack) { return new Proxy($hack, this); }
+    $wrap($p) { return new Proxy(this.$func($p), new PromiseReflection()); }
+    $seq() { const $q = Promise.all(this.$queue); this.$queue = [$q]; return $q; }
+    $inc($p) { this.$queue.push($p); return $p; }
+
+    // indirect and direct versions
+    $do($fn) { return (this.$seq().then($fn) |> this.$inc) |> this.$wrap; }
+    //$do($fn) { return $fn(); }
+
+    //
+    get($hack, ...$args) {
+        if ($args[0] == "&isCode") return false;
+        if ($args[0] == "&isWrap") return true;
+        if (["&data", "&code"].indexOf($args[0]) >= 0) return $hack?.[$args[0]];
+        if ([$symbols["&data"]].indexOf($args[0]) >= 0) return this.$data($hack);
+        if ($args[0]?.at?.(0) == "&") return $hack?.["&code"]?.[$args[0]];
+
+        //
+        if (Object.values($symbols).indexOf($args[0]) >= 0) { 
+            $args[0] = $names[$args[0]];
+            return (this.$seq().then(() => {
+                return this.$worker.$request({
+                    $cmd: "get", 
+                    $identify: true, 
+                    $async: $hack["&async"] ?? false, 
+                    $args: [this.$data($hack), ...$args]
+                })
+            }) |> this.$inc) |> this.$wrap;
+        }
+
+        //
+        if (["then", "catch", "finally"].indexOf($args[0]) >= 0) {
+            /*const $g = this.$do(() => {
+                return this.$worker.$request({
+                    $cmd: "access", 
+                    $identify: true, 
+                    $async: true, 
+                    $args: [this.$data($hack), ...$args]
+                })
+            });
+            return $g[$args[0]]?.bind?.($g);*/
+            return null;
+        }
+
+        //
+        if (["bind", "call", "apply"].indexOf($args[0]) >= 0) {
+            const $worker = this.$worker;
+            const $data = this.$data($hack);
+            const $async = this.$async;
+            const $fn = (...$arg) => {
+                return this.$do(() => {
+                    return this.$worker.$request({
+                        $cmd: "apply", 
+                        $identify: true, 
+                        $async: $hack["$async"] ?? $async, 
+                        $args: [$data, $args[1], $arg]
+                    })
+                });
+            };
+            return $fn[$args[0]].bind($fn);
+        }
+
+        // usable only for callbacks
+        // TODO! needs to reworking!
+        /*if (["*"].indexOf($args[0]) >= 0) {
+            const $worker = this.$worker;
+            const $data = this.$data($hack);
+            const $async = this.$async;
+            const $fn = (...$arg) => {
+                return $worker.$request({
+                    $cmd: "apply", 
+                    $identify: true, 
+                    $async, 
+                    $args: [$data, $arg, $args[1]]
+                });
+            };
+            return $fn.bind(this);
+        }*/
+
+        //
+        if (["string", "number", "boolean", "bigint"].indexOf(typeof $args[0]) >= 0) {
+            const $async = !($args[0]?.at?.(-1) == "*") ?? false;
+            if (!$async) $args[0] = $args[0]?.slice?.(0, -1);
+            const $g = this.$do(() => {
+                return this.$worker.$request({
+                    $cmd: "get", 
+                    $identify: true, 
+                    $async: $hack["$async"] ?? this.$async, 
+                    $args: [this.$data($hack), ...$args]
+                })
+            });
+            return ($async ? $g : $g["*"]);
+        }
+    }
+
+    //
+    ownKeys($hack, ...$args) {
+        return this.$do(() => {
+            return this.$worker.$request({
+                $cmd: "ownKeys", 
+                $identify: true, 
+                $async: $hack["$async"] ?? this.$async, 
+                $args: [this.$data($hack), ...$args]
+            })
+        });
+    }
+
+    //
+    has($hack, ...$args) {
+        if (["string", "number", "boolean", "bigint"].indexOf(typeof $args[0]) >= 0) {
+            return this.$do(()=>{
+                return this.$worker.$request({
+                    $cmd: "has", 
+                    $identify: true, 
+                    $async: $hack["$async"] ?? this.$async, 
+                    $args: [this.$data($hack), ...$args]
+                })
+            });
+        }
+    }
+
+    //
+    set($hack, ...$args) {
+        if (["string", "number", "boolean", "bigint"].indexOf(typeof $args[0]) >= 0) {
+            const $async = !($args[0]?.at?.(-1) == "*") ?? false;
+            if (!$async) $args[0] = $args[0]?.slice?.(0, -1);
+            const $g = this.$do(() => {
+                return this.$worker.$request({
+                    $cmd: "set", 
+                    $identify: true, 
+                    $async: true, //$hack["$async"] ?? this.$async, 
+                    $args: [this.$data($hack), ...$args]
+                })
+            });
+            return ($async ? $g : $g["*"])?;
+        }
+    }
+
+    // 
+    construct($hack, ...$args) {
+        return this.$do(() => {
+            return this.$worker.$request({
+                $cmd: "construct", 
+                $identify: true, 
+                $async: true,//$hack["$async"] ?? this.$async, 
+                $args: [this.$data($hack), ...$args]
+            })
+        });
+    }
+
+    //
+    apply($hack, ...$args) {
+        return this.$do(() => {
+            return this.$worker.$request({
+                $cmd: "apply", 
+                $identify: true, 
+                $async: true,//$hack["$async"] ?? this.$async, 
+                $args: [this.$data($hack), ...$args]
+            })
+        });
+    }
+
+    //
+    deleteProperty($hack, ...$args) {
+        return this.$do(() => {
+            return this.$worker.$request({
+                $cmd: "deleteProperty", 
+                $identify: true, 
+                $async: $hack["$async"] ?? this.$async, 
+                $args: [this.$data($hack), ...$args]
+            })
+        });
+    }
+};

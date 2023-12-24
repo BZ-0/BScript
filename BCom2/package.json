@@ -1,0 +1,74 @@
+{
+    "name": "@bz0/bcom2",
+    "version": "2.4.0a",
+    "description": "Next-Generation of InterWork library...",
+    "main": "src/index.mjs",
+    "type": "module",
+    "scripts": {
+        "serve": "fastify start example/browser/serve.mjs --port 4000 --debug --options --experimental-exports --root=./",
+        "test": "deno test --unstable --allow-all ./test/deno/test.mjs",
+        "build": "npx babel src/civet --out-dir src/js --out-file-extension .mjs --extensions .ts,.js,.tsx,.jsx,.cjs,.mjs,.civet --plugins=@danielx/civet/babel-plugin && npx prettier ./src/js/ --write",
+        "watch": "npx babel src/civet --out-dir src/js --out-file-extension .mjs --extensions .ts,.js,.tsx,.jsx,.cjs,.mjs,.civet --plugins=@danielx/civet/babel-plugin --watch",
+        "format": "npx prettier ./src/js/ --write",
+        "format-civet": "npx prettier ./src/civet/ --write"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/BlazerNEO/BInter2.git"
+    },
+    "imports": {
+        "cbor-x/*.mjs": "./node_modules/cbor-x/*.mjs",
+        "@petamoriken/*.mjs": "./node_modules/@petamoriken/*.mjs",
+        "src/*.mjs": "./src/*.mjs",
+        "src/js/*.mjs": "./src/js/*.mjs",
+        "test/*.mjs": "./test/*.mjs",
+        "deps/*.mjs": "./deps/*.mjs",
+        "BTyped2/*.mjs": "./deps/BTyped2/*.mjs"
+    },
+    "keywords": [
+        "worker",
+        "web",
+        "js",
+        "browser",
+        "fastify"
+    ],
+    "author": "unit-404, user-404",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/BlazerNEO/BInter2/issues"
+    },
+    "homepage": "https://github.com/BlazerNEO/BInter2#readme",
+    "dependencies": {
+        "@bz0/btyped2": "latest",
+        "@petamoriken/float16": "^3.8.1",
+        "BTyped2": "file:./deps/BTyped2",
+        "cbor-x": "^1.5.4",
+        "dotenv": "^16.3.1"
+    },
+    "devDependencies": {
+        "@jridgewell/sourcemap-codec": "^1.4.15",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@babel/cli": "^7.23.0",
+        "@babel/core": "^7.23.0",
+        "@babel/eslint-plugin": "^7.22.10",
+        "@babel/preset-env": "^7.22.20",
+        "@babel/preset-modules": "^0.1.6",
+        "@danielx/civet": "^0.6.41",
+        "@fastify/autoload": "^5.7.1",
+        "@fastify/cors": "^8.4.0",
+        "@fastify/static": "^6.11.2",
+        "@fastify/vite": "^4.0.0",
+        "@gluon-framework/gluon": "^0.14.0",
+        "babel-plugin-generator-prettier": "^1.2.0",
+        "babel-plugin-module-extension-resolver": "^1.0.0",
+        "eslint-plugin-babel": "^5.3.1",
+        "fastify": "^4.23.2",
+        "prettier": "3.0.3",
+        "socket.io": "^4.7.2",
+        "typescript": "^5.1.6",
+        "vite": "^4.4.6",
+        "vite-plugin-cross-origin-isolation": "^0.1.6",
+        "vite-plugin-pug": "^0.3.2",
+        "vite-plugin-pwa": "^0.16.4"
+    }
+}

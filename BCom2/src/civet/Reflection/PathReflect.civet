@@ -1,0 +1,80 @@
+// @ts-nocheck
+"use strict";
+
+//
+import { $contextify, FakeReflect, _LOG_ } from "../Library/Symbols";
+import STD from "../Library/Standard";
+
+//
+const PathReflect = {
+    /** @type {Reflect} */
+    $reflect: (typeof Reflect != "undefined" ? Reflect : FakeReflect),
+    $options: new Map([
+        ["proxy", STD.classed.bind(STD)],
+        ["shared", STD.shared.bind(STD)],
+        ["object", STD.object.bind(STD)],
+        ["class", STD.classed.bind(STD)],
+        ["classed", STD.classed.bind(STD)],
+        ["transfer", STD.transfer.bind(STD)],
+    ]),
+    get(map, _key, rec) {
+        const pair = _key.split(":");
+        const key = pair[0] || _key;
+        const option = pair[1] || "";
+
+        const $got = this.$reflect.get(map, key, rec);
+        if (this.$options.has(option)) {
+            return this.$options.get(option)($got);
+        }
+        return $contextify(map, $got);
+    },
+    set(map, key, val) {
+        return this.$reflect.set(map, key, val);
+    },
+    apply(map, self, args) {
+        return this.$reflect.apply(map, self, args);
+    },
+    construct(map, args, T) {
+        return this.$reflect.construct(map, args, T);
+    },
+    has(map, key) {
+        return this.$reflect.has(map, key);
+    },
+    deleteProperty(map, key) {
+        return this.$reflect.deleteProperty(map, key);
+    },
+    ownKeys(map) {
+        return this.$reflect.ownKeys(map);
+    }
+};
+
+//
+export default PathReflect;
+export class MaPathReflect {
+    constructor() {
+
+    };
+
+    get(map, key) {
+        return map.get(key);
+    }
+
+    set(map, key, val) {
+        return map.set(key, val);
+    }
+
+    has(map, key) {
+        return map.has(key);
+    }
+
+    deleteProperty(map, key) {
+        return map.delete(key);
+    }
+
+    ownKeys(map) {
+        return map.keys();
+    }
+};
+
+//
+export const defaultMaPathReflect = new MaPathReflect();

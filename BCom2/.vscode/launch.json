@@ -1,0 +1,71 @@
+{
+    // Используйте IntelliSense, чтобы узнать о возможных атрибутах.
+    // Наведите указатель мыши, чтобы просмотреть описания существующих атрибутов.
+    // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "runtimeExecutable": "bun",
+            "runtimeArgs": ["--bun", "--smol", "--inspect-brk", "run"],
+            "name": "Debug Bun",
+            "program": "${workspaceFolder}/example/browser/main.mjs",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "skipFiles": ["<node_internals>/**"],
+            "type": "bun"
+        },
+        {
+            "name": "Attach To Deno",
+            "port": 9229,
+            "request": "attach",
+            "skipFiles": ["<node_internals>/**"],
+            "type": "node"
+        },
+        {
+            "name": "Attach to Chrome",
+            "port": 9222,
+            "request": "attach",
+            "type": "chrome",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug Deno",
+            "program": "${workspaceFolder}/test/helper.mjs",
+            "runtimeExecutable": "deno",
+            "runtimeArgs": ["run", "--inspect", "--unstable", "--allow-all"],
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "skipFiles": ["<node_internals>/**"],
+            "type": "node",
+            "port": 9229,
+            "attachSimplePort": 9229
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Debug Your JS",
+            "url": "http://localhost:4000/",
+            "webRoot": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}",
+            "sourceMaps": true,
+            "trace": true,
+            "port": 9222,
+            "enableContentValidation": false,
+            "perScriptSourcemaps": "yes",
+            "runtimeExecutable": "C:\\Users\\User\\AppData\\Local\\Thorium\\Application\\thorium.exe",
+            "runtimeArgs": [
+                "--no-startup-window",
+                "--headless",
+                "--incognito",
+                "--remote-debugging-port=9222"
+            ],
+            "sourceMapPathOverrides": {
+                "webpack:///./*": "${webRoot}/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
+        }
+    ]
+}

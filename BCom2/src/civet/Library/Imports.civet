@@ -1,0 +1,26 @@
+// @ts-nocheck
+"use strict";
+
+// !IMPORTANT! All Dependencies should be here!
+
+// browser-style
+import {Encoder, Decoder} from "cbor-x"//'cbor-x/index.js'
+import * as fp16m from "@petamoriken/float16"//"@petamoriken/float16/browser/float16";
+
+// NodeJS style
+//import {Encoder, Decoder} from 'cbor-x/index.js'
+//import * as fp16m from "@petamoriken/float16";
+
+//
+export {fp16m};
+
+//
+const encoder = new Encoder({ pack: true, copyBuffers: true, structuredClone: true });
+const decoder = new Decoder({ pack: true, copyBuffers: true });
+
+//
+const msgpackM = {
+    encode: encoder.encode,
+    decode: decoder.decode
+};
+export {msgpackM};

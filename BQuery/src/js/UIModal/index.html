@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Prompt</title>
+        <script type="text/javascript" src="prompt.js"></script>
+        <style>@import url("prompt.css");</style>
+    </head>
+    <body>
+        <button id="prompt">Prompt, please...</button>
+        <button id="alert">Alert, please...</button>
+        <button id="confirm">Confirm, please...</button>
+
+        <script>
+            (async ()=>{
+                makePromptTmpl();
+
+                //
+                document.querySelector("#confirm").addEventListener("click", async () => {
+                    const result = await $confirm("Confirm your action...");
+                    console.log(result);
+                });
+
+                //
+                document.querySelector("#prompt").addEventListener("click", async () => {
+                    const result = await $prompt("Write your data");
+                    console.log(result);
+                });
+
+                //
+                document.querySelector("#alert").addEventListener("click", async () => {
+                    await $alert("You alert!");
+                });
+            })();
+        </script>
+    </body>
+</html>

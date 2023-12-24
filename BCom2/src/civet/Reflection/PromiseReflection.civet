@@ -1,0 +1,171 @@
+// @ts-nocheck
+"use strict";
+
+//
+import { wrapFunc, BaseReflection } from "./DirectReflection";
+import { $symbols, $names, $tryIn, $contextify, $instanceAnyOf, FakeReflect, _LOG_ } from "../Library/Symbols";
+import SyncPromise from "../Library/SyncPromise"
+
+// from remote side...
+export default class PromiseReflection extends BaseReflection {
+    /** @type {Reflect} */
+    $reflect = (typeof Reflect != "undefined" ? Reflect : FakeReflect);
+
+    /** @type {ReferenceDictionary} */
+    //#dictionary = null;
+
+    //
+    constructor(
+        reflect = (typeof Reflect != "undefined" ? Reflect : FakeReflect)
+    ) {
+        super(reflect);
+    }
+
+    //
+    #indirection($hack, cb = ($) => $, {initiate = false, directly = true, forceAsync = false}) {
+        const $promised = $tryIn($hack["&data"], forceAsync ? ["then"] : ["&sync", "then"])?.call?.($hack["&data"], ($obj) => {
+            if (!$obj || ["object", "function"].indexOf(typeof $obj) < 0) {
+                return $obj;
+            };
+            return initiate ? $unwrap($obj) : $obj;
+        }) ?? ($hack["&data"]);
+
+        //
+        return (directly || ($promised?.["&typeof"] == "promise" || !$instanceAnyOf($promised, [Promise, SyncPromise]))) ? $promised : new Proxy(wrapFunc({
+            ["&data"]: $promised?.then?.(cb)?.catch?.(console.error?.bind?.(console)), 
+            ["&code"]: $promised?.["&code"] || $hack?.["&code"]
+        }), this);
+    }
+
+    //
+    #sync($hack) {
+        return this.#indirection($hack, ($) => $, {initiate: true, directly: false, forceAsync: false});
+    }
+
+    //
+    get($hack, ...$args) {
+        if ($args[0] == "&isCode") return false;
+        if ($args[0] == "&isWrap") return true;
+        if (["&data", "&code", "&buffer"].indexOf($args[0]) >= 0) return ($hack?.[$args[0]] ?? $hack?.["&data"]?.[$args[0]] ?? ($hack?.["&data"]?.then?.(($)=>{ return $[$args[0]]; })));
+        if ([$symbols["&data"]].indexOf($args[0]) >= 0) return this.$data($hack);
+
+        // broken op, doesn't chain support...
+        if (["*", "&synced"].indexOf($args[0]) >= 0) {
+            const $x = this.#sync($hack), $b = $x["&buffer"];
+            return $b && !$instanceAnyOf($b, [Promise, SyncPromise]) ? ($x?.[$args[0]] ?? $x) : $x;
+        }
+
+        //
+        if (["&sync"].indexOf($args[0]) >= 0) {
+            const $w = this.#indirection($hack, ($w) => $w, {});
+            return $contextify($w, $w?.["&sync"] ?? $w?.["then"]) ?? (($) => $($w));
+        }
+
+        //
+        if ($args[0]?.at?.(0) == "&") return $hack?.["&code"]?.[$args[0]];
+
+        //
+        if (Object.values($symbols).indexOf($args[0]) >= 0) { 
+            $args[0] = $names[$args[0]];
+            return this.#indirection($hack, ($w) => {
+                return $w?.["&code"]?.[$args[0]];
+            }, { directly: false });
+        }
+
+        //
+        if (["bind", "call", "apply"].indexOf($args[0]) >= 0) {
+            const $reflect = this.$reflect;
+            const $indirection = this.#indirection.bind(this);
+            const $fn = (...$a) => { return $indirection($hack, async ($obj) => {
+                return (await $reflect.apply($obj, $args[1], await Promise.all(await $a)));
+            }, { directly: false }) };
+            return $fn[$args[0]].bind($fn);
+        }
+
+        //
+        if (["then", "catch", "finally"].indexOf($args[0]) >= 0) {
+            const $w = this.#indirection($hack, ($w) => $w, { forceAsync: true });
+            return $contextify($w, $w?.[$args[0]]);
+        }
+
+        //
+        return this.#indirection($hack, async ($obj) => {
+            if (!$obj) return null;
+            return $contextify($obj, await this.$reflect.get($obj, ...(await Promise.all(await $args))));
+        }, { directly: false });
+    }
+
+    //
+    ownKeys($hack, ...$args) {
+        return this.#indirection($hack, async ($obj) => {
+            return (await this.$reflect.ownKeys($obj, ...(await Promise.all(await $args))));
+        }, { directly: false });
+    }
+
+    //
+    has($hack, ...$args) {
+        return this.#indirection($hack, async ($obj) => {
+            if (!$obj) return null;
+            return (await this.$reflect.has($obj, ...(await Promise.all(await $args))));
+        }, { directly: false });
+    }
+
+    //
+    set($hack, ...$args) {
+        return this.#indirection($hack, async ($obj) => {
+            return (await this.$reflect.set($obj, ...(await Promise.all(await $args))));
+        }, { directly: false });
+    }
+
+    // currently, chaining without 'await' not available...
+    construct($hack, ...$args) {
+        return this.#indirection($hack, async ($obj) => {
+            return (await this.$reflect.construct($obj, ...(await Promise.all(await $args))));
+        }, { directly: false });
+    }
+
+    // currently, chaining without 'await' not available...
+    apply($hack, ...$args) {
+        return this.#indirection($hack, async ($obj) => {
+            if (!$obj) return null;
+            return (await this.$reflect.apply($obj, ...(await Promise.all(await $args))));
+        }, { directly: false });
+    }
+
+    //
+    deleteProperty($hack, ...$args) {
+        return this.#indirection($hack, async ($obj) => {
+            return (await this.$reflect.deleteProperty($obj, ...(await Promise.all(await $args))));
+        }, { directly: false });
+    }
+};
+
+//
+export class LazyReflection extends BaseReflection {
+    constructor(reflect = (typeof Reflect != "undefined" ? Reflect : FakeReflect)) {
+        super(reflect);
+    }
+
+    //
+    $data($hack) {
+        const $got = !$hack?.["&initiated"] ? ($hack["&data"] = $hack?.["&data"]()) : ($hack?.["&data"]);
+        $hack["&initiated"] = true;
+        return $unwrap($got);
+    }
+};
+
+//
+export const $unwrap = (lazy) => {
+    if (lazy?.["&typeof"] == "lazy") {
+        return new Proxy(wrapFunc({
+            ["&code"]: {["&typeof"]: "promise"},
+            ["&data"]: async do
+                let $lz = lazy;
+                while (!!$lz && $lz?.["&typeof"] == "lazy") {
+                    $lz = await $lz?.[$symbols["&data"]];
+                }
+                return $lz
+        }), new PromiseReflection());
+    }
+    return lazy;
+}
