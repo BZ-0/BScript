@@ -1,0 +1,47 @@
+
+
+//
+@layer dark {
+    :root, :host {
+        // dynamic default theming
+        --themed: #101010;
+        --invert: #F0F0F0;
+
+        //
+        --color: IndianRed;
+        --color-invert: #ffffff;
+
+        //
+        --accent: #FFFFFF;
+        --shadow: #010101;
+
+        //
+        --chroma: 0%;
+        --bg-power: 100%;
+        --text-power: 100%;
+        --power: 100%;
+    }
+}
+
+//
+@layer light {
+    :root, :host {
+        // dynamic default theming
+        --themed: #F0F0F0;
+        --invert: #101010;
+
+        //
+        --color: Brown;
+        --color-invert: #ffffff;
+
+        //
+        --accent: #FFFFFF;
+        --shadow: #101010;
+
+        //
+        --chroma: 0%;
+        --bg-power: 100%;
+        --text-power: 100%;
+        --power: 100%;
+    }
+}

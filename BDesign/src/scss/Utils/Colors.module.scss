@@ -1,0 +1,27 @@
+@use "sass:list";
+@use "sass:meta";
+@use "sass:string";
+
+//
+@function colorize($color, $power) { 
+    @return "color-mix(in srgb, #{$color} #{$power}, var(--themed))";
+}
+@function colorize-inv($color, $power) { 
+    @return "color-mix(in srgb, #{$color} #{$power}, var(--invert))"; 
+}
+
+//
+@function colored-text($power) { 
+    @return "color-mix(in srgb, var(--color) #{$power}, var(--invert))"; 
+}
+@function colored($power) { 
+    @return "color-mix(in srgb, var(--color) #{$power}, var(--themed))"; 
+}
+@function colored-inv($power) { 
+    @return "color-mix(in srgb, var(--color-invert) #{$power}, var(--invert))"; 
+}
+
+//
+@function blend($color, $chroma, $gray) { 
+    @return "color-mix(in srgb, #{$gray} #{$chroma}, #{$color})"; 
+}
