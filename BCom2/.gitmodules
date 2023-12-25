@@ -1,7 +1,0 @@
-[submodule "deps/shadowrealm-api"]
-	path = deps/shadowrealm-api
-	url = https://github.com/BlazerNEO/shadowrealm-api.git
-[submodule "deps/BTyped2"]
-	path = deps/BTyped2
-	url = https://github.com/BlazerNEO/BTyped2.git
-	

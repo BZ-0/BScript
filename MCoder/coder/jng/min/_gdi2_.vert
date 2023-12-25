@@ -1,2 +1,0 @@
-#version 300 es
-precision lowp float;precision lowp int;out highp vec2 texcoord;void main(){const lowp vec2 l[4]=vec2[4](vec2(-1),vec2(1,-1),vec2(1),vec2(-1,1));texcoord=vec2(l[gl_VertexID].xy*.5f+.5f);texcoord.y=1.f-texcoord.y;gl_Position=vec4(l[gl_VertexID],0,1);}
